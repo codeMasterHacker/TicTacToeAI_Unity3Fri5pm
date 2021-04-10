@@ -27,12 +27,274 @@ public class GameController : MonoBehaviour
 
     void SetGameControllerReferenceOnButtons()
     {
-
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            buttonList[i].GetComponentInParent<GridSpace>().SetGameControllerReference(this);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public string GetPlayerSide()
     {
-        
+        return playerSide;
+    }
+
+    public void EndTurn()
+    {
+        moveCount++;
+
+        if (buttonList[0].text == playerSide && buttonList[1].text == playerSide && buttonList[2].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[3].text == playerSide && buttonList[4].text == playerSide && buttonList[5].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[6].text == playerSide && buttonList[7].text == playerSide && buttonList[8].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[0].text == playerSide && buttonList[3].text == playerSide && buttonList[6].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[1].text == playerSide && buttonList[4].text == playerSide && buttonList[7].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[2].text == playerSide && buttonList[5].text == playerSide && buttonList[8].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[0].text == playerSide && buttonList[4].text == playerSide && buttonList[8].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (buttonList[2].text == playerSide && buttonList[4].text == playerSide && buttonList[6].text == playerSide)
+        {
+            GameOver(playerSide);
+        }
+
+        if (moveCount >= 9)
+        {
+            GameOver("tie");
+        }
+
+        ChangeSides();
+    }
+
+    void ChangeSides()
+    {
+        //playerSide = (playerSide == "X") ? "O" : "X";
+
+        if (playerSide == "X")
+        {
+            playerSide = "O";
+        }
+        else
+        {
+            playerSide = "X";
+        }
+    }
+
+    void GameOver(string winningPlayer)
+    {
+        SetBoardInteractable(false);
+
+        if (winningPlayer == "tie")
+        {
+            SetGameOverText("It's a tie!");
+        }
+        else
+        {
+            if (winningPlayer == computer)
+            {
+                SetGameOverText("AI Wins!");
+            }
+            else
+            {
+                SetGameOverText("Human Wins!");
+            }
+        }
+
+        restartButton.SetActive(true);
+    }
+
+    void SetGameOverText(string value)
+    {
+        gameOverPanel.SetActive(true);
+        gameOverText.text = value;
+    }
+
+    void SetBoardInteractable(bool toggle)
+    {
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            buttonList[i].GetComponentInParent<Button>().interactable = toggle;
+        }
+    }
+
+    public void RestartGame()
+    {
+        playerSide = "X";
+        moveCount = 0;
+        gameOverPanel.SetActive(false);
+        restartButton.SetActive(false);
+        SetBoardInteractable(true);
+
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            buttonList[i].text = "";
+        }
+    }
+
+    public int FindBestMove()
+    {
+        int bestVal = -1000;
+        int bestMove = -1;
+
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            if (buttonList[i].text == "")
+            {
+                buttonList[i].text = computer;
+
+                int moveVal = MiniMax(false);
+
+                buttonList[i].text = "";
+
+                if (moveVal > bestVal)
+                {
+                    bestMove = i;
+                    bestVal = moveVal;
+                }
+            }
+        }
+
+        return bestMove;
+    }
+
+    private int MiniMax(bool isMax)
+    {
+        int score = Evaluate();
+
+        if (score == 10)
+        {
+            return score;
+        }
+
+        if (score == -10)
+        {
+            return score;
+        }
+
+        if (IsMovesLeft() == false)
+        {
+            return 0;
+        }
+
+        if (isMax)
+        {
+            int best = -1000;
+
+            for (int i = 0; i < buttonList.Length; i++)
+            {
+                if (buttonList[i].text == "")
+                {
+                    buttonList[i].text = computer;
+
+                    best = Mathf.Max(best, MiniMax(!isMax));
+
+                    buttonList[i].text = "";
+                }
+            }
+
+            return best;
+        }
+        else
+        {
+            int best = 1000;
+
+            for (int i = 0; i < buttonList.Length; i++)
+            {
+                if (buttonList[i].text == "")
+                {
+                    buttonList[i].text = user;
+
+                    best = Mathf.Min(best, MiniMax(!isMax));
+
+                    buttonList[i].text = "";
+                }
+            }
+
+            return best;
+        }
+    }
+
+    private bool IsMovesLeft()
+    {
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            if (buttonList[i].text == "")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void MakeMove(int bestMove)
+    {
+        if (bestMove >= 0)
+        {
+            buttonList[bestMove].GetComponentInParent<GridSpace>().MakeMove();
+        }
+    }
+
+    private int Evaluate()
+    {
+        if (buttonList[0].text == buttonList[1].text && buttonList[1].text == buttonList[2].text)
+        {
+            if (buttonList[1].text == computer)
+            {
+                return 10;
+            }
+            else
+            {
+                return -10;
+            }
+        }
+
+        if (buttonList[3].text == buttonList[4].text && buttonList[4].text == buttonList[5].text)
+        {
+            if (buttonList[4].text == computer)
+            {
+                return 10;
+            }
+            else
+            {
+                return -10;
+            }
+        }
+
+        if (buttonList[6].text == buttonList[7].text && buttonList[7].text == buttonList[8].text)
+        {
+            if (buttonList[7].text == computer)
+            {
+                return 10;
+            }
+            else
+            {
+                return -10;
+            }
+        }
     }
 }
